@@ -25,6 +25,7 @@ import AppointmentFormPage from '../pages/appointments/AppointmentFormPage';
 
 // Patients
 import PatientListPage from '../pages/patients/PatientListPage';
+import PatientProfileSetupPage from '../pages/patients/PatientProfileSetupPage';
 
 export default function AppRouter() {
   return (
@@ -32,6 +33,16 @@ export default function AppRouter() {
       {/* Public */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+
+      {/* Standalone Protected Routes */}
+      <Route
+        path="/profile/setup"
+        element={
+          <ProtectedRoute allowedRoles={['PATIENT']}>
+            <PatientProfileSetupPage />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Protected (inside MainLayout) */}
       <Route
