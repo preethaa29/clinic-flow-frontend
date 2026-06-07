@@ -1,0 +1,89 @@
+import api from './api';
+import type { AppointmentResponseDto, AppointmentRequestDto, UserResponseDto } from '../models/types';
+
+export interface Clinician {
+  userId: number;
+  name: string;
+  department: string;
+}
+
+export const DEFAULT_CLINICIANS: Clinician[] = [
+  { userId: 1, name: 'Dr. Asha Mehta', department: 'General Medicine' },
+  { userId: 2, name: 'Dr. Sarah Mitchell', department: 'Pediatrics' },
+  { userId: 3, name: 'Dr. James Carter', department: 'Cardiology' },
+  { userId: 4, name: 'Dr. Emily Watson', department: 'Dermatology' }
+];
+
+export async function getAllAppointments(): Promise<AppointmentResponseDto[]> {
+  try {
+    const response = await api.get<AppointmentResponseDto[]>('/api/v1/appointments');
+    return response.data;
+  } catch (err: any) {
+    throw new Error(err.response?.data?.message || 'Failed to fetch appointments');
+  }
+}
+
+export async function getAppointmentsByPatient(patientId: number): Promise<AppointmentResponseDto[]> {
+  try {
+    const response = await api.get<AppointmentResponseDto[]>(`/api/v1/appointments/patient/${patientId}`);
+    return response.data;
+  } catch (err: any) {
+    throw new Error(err.response?.data?.message || 'Failed to fetch patient appointments');
+  }
+}
+
+export async function createAppointment(request: AppointmentRequestDto): Promise<AppointmentResponseDto> {
+  try {
+    const response = await api.post<AppointmentResponseDto>('/api/v1/appointments', request);
+    return response.data;
+  } catch (err: any) {
+    throw new Error(err.response?.data?.message || 'Failed to create appointment');
+  }
+}
+
+export async function checkInAppointment(apptId: number): Promise<AppointmentResponseDto> {
+  try {
+    const response = await api.patch<AppointmentResponseDto>(`/api/v1/appointments/${apptId}/check-in`);
+    return response.data;
+  } catch (err: any) {
+    throw new Error(err.response?.data?.message || 'Failed to check in appointment');
+  }
+}
+
+export async function completeAppointment(apptId: number): Promise<AppointmentResponseDto> {
+  try {
+    const response = await api.patch<AppointmentResponseDto>(`/api/v1/appointments/${apptId}/complete`);
+    return response.data;
+  } catch (err: any) {
+    throw new Error(err.response?.data?.message || 'Failed to complete appointment');
+  }
+}
+
+export async function cancelAppointment(apptId: number): Promise<AppointmentResponseDto> {
+  try {
+    const response = await api.patch<AppointmentResponseDto>(`/api/v1/appointments/${apptId}/cancel`);
+    return response.data;
+  } catch (err: any) {
+    throw new Error(err.response?.data?.message || 'Failed to cancel appointment');
+  }
+}
+
+/**
+ * Gets clinicians list. Falls back to static seed data if current role doesn't have Admin privileges
+ */
+export async function getClinicians(): Promise<Clinician[]> {
+  try {
+    const response = await api.get<UserResponseDto[]>('/api/v1/admin/users');
+    const clinicians = response.data
+      .filter(u => u.role === 'CLINICIAN' && u.status === 'ACTIVE')
+      .map(u => ({
+        userId: u.userId,
+        name: u.name,
+        department: u.name.includes('Mehta') ? 'General Medicine' : 'Pediatrics'
+      }));
+    return clinicians.length > 0 ? clinicians : DEFAULT_CLINICIANS;
+  } catch (e) {
+    console.warn('Lacks permission to list users, falling back to default clinicians', e);
+    return DEFAULT_CLINICIANS;
+  }
+}
